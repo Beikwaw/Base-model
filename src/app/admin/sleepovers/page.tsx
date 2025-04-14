@@ -3,14 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Clock } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Calendar, Phone, Home, User, RefreshCw, Check, X } from "lucide-react";
 import { getAllSleepoverRequests, updateSleepoverStatus } from '@/lib/firestore';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { RequestActions } from '@/components/admin/RequestActions';
-import { RefreshButton } from '@/components/ui/refresh-button';
 
 const formatDate = (date: any) => {
   if (!date) return 'N/A';
@@ -23,6 +22,10 @@ const formatDate = (date: any) => {
 export default function SleepoverRequestsPage() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [adminResponse, setAdminResponse] = useState('');
+  const [showDialog, setShowDialog] = useState(false);
+  const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
 
   useEffect(() => {
     fetchRequests();
@@ -41,66 +44,107 @@ export default function SleepoverRequestsPage() {
     }
   };
 
-  const handleStatusUpdate = async (id: string, status: string, adminResponse?: string) => {
+  const handleAction = (request: any, action: 'approve' | 'reject') => {
+    setSelectedRequest(request);
+    setActionType(action);
+    setAdminResponse('');
+    setShowDialog(true);
+  };
+
+  const handleSubmitAction = async () => {
+    if (!selectedRequest || !actionType) return;
+
     try {
-      await updateSleepoverStatus(id, status as any, adminResponse);
-      await fetchRequests();
-      toast.success('Status updated successfully');
+      await updateSleepoverStatus(selectedRequest.id, actionType, adminResponse);
+      toast.success(`Request ${actionType}d successfully`);
+      setShowDialog(false);
+      setSelectedRequest(null);
+      setAdminResponse('');
+      fetchRequests();
     } catch (error) {
       console.error('Error updating status:', error);
-      toast.error('Failed to update status');
+      toast.error(`Failed to ${actionType} request`);
     }
   };
 
   const RequestCard = ({ request }: { request: any }) => (
-    <Card key={request.id}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-medium">Sleepover Request</h3>
-              <Badge variant={
-                request.status === 'approved' ? 'default' :
-                request.status === 'pending' ? 'secondary' :
-                'destructive'
-              }>
-                {request.status}
-              </Badge>
-            </div>
-            
-            <div className="bg-amber-50 p-2 rounded-md border border-amber-200 mb-2">
-              <p className="text-sm font-semibold text-amber-800">
-                Tenant Code: {request.tenantCode}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium">Guest:</span> {request.guestName}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium">Phone:</span> {request.guestPhone}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium">Room:</span> {request.roomNumber}
-                </p>
+    <Card className="hover:shadow-md transition-shadow duration-200">
+      <CardContent className="p-6">
+        <div className="flex flex-col space-y-4">
+          {/* Status Badge */}
+          <div className="flex justify-between items-center">
+            <Badge variant={
+              request.status === 'approved' ? 'success' :
+              request.status === 'pending' ? 'secondary' :
+              'destructive'
+            }>
+              {request.status.toUpperCase()}
+            </Badge>
+            {request.status === 'pending' && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                  onClick={() => handleAction(request, 'approve')}
+                >
+                  <Check className="h-4 w-4 mr-1" />
+                  Approve
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => handleAction(request, 'reject')}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Reject
+                </Button>
               </div>
+            )}
+          </div>
+
+          {/* Tenant Code */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium">From:</span> {formatDate(request.startDate)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium">To:</span> {formatDate(request.endDate)}
+                <p className="text-sm font-semibold text-blue-900">
+                  Tenant Code: {request.tenantCode}
                 </p>
               </div>
             </div>
           </div>
-          <RequestActions
-            type="sleepover"
-            data={request}
-            onStatusUpdate={handleStatusUpdate}
-          />
+
+          {/* Request Details */}
+          <div className="grid gap-3">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-gray-400" />
+              <p className="text-sm text-gray-600">Guest: {request.guestName}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-gray-400" />
+              <p className="text-sm text-gray-600">Phone: {request.guestPhone}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Home className="h-4 w-4 text-gray-400" />
+              <p className="text-sm text-gray-600">Room: {request.roomNumber}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <p className="text-sm text-gray-600">
+                Stay: {formatDate(request.startDate)} - {formatDate(request.endDate)}
+              </p>
+            </div>
+          </div>
+
+          {/* Admin Response (if any) */}
+          {request.adminResponse && (
+            <div className="mt-2 p-3 bg-gray-50 rounded-md">
+              <p className="text-sm font-medium text-gray-700">Admin Response:</p>
+              <p className="text-sm text-gray-600 mt-1">{request.adminResponse}</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -109,59 +153,62 @@ export default function SleepoverRequestsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="flex items-center gap-2">
+          <RefreshCw className="h-5 w-5 animate-spin text-gray-500" />
+          <span className="text-gray-600">Loading requests...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Sleepover Requests</CardTitle>
-          <RefreshButton onClick={fetchRequests} loading={loading} />
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="all">
-            <TabsList>
-              <TabsTrigger value="all">All Requests</TabsTrigger>
-              <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="approved">Approved</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="all" className="space-y-4">
-              {requests.map((request) => (
-                <RequestCard key={request.id} request={request} />
-              ))}
-            </TabsContent>
-            
-            <TabsContent value="pending" className="space-y-4">
-              {requests
-                .filter((request) => request.status === 'pending')
-                .map((request) => (
-                  <RequestCard key={request.id} request={request} />
-                ))}
-            </TabsContent>
-            
-            <TabsContent value="approved" className="space-y-4">
-              {requests
-                .filter((request) => request.status === 'approved')
-                .map((request) => (
-                  <RequestCard key={request.id} request={request} />
-                ))}
-            </TabsContent>
-            
-            <TabsContent value="rejected" className="space-y-4">
-              {requests
-                .filter((request) => request.status === 'rejected')
-                .map((request) => (
-                  <RequestCard key={request.id} request={request} />
-                ))}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">Sleepover Requests</h1>
+          <p className="text-gray-500 mt-1">Review and manage student sleepover requests</p>
+        </div>
+
+        <div className="space-y-4">
+          {requests.map((request) => (
+            <RequestCard key={request.id} request={request} />
+          ))}
+        </div>
+      </div>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === 'approve' ? 'Approve' : 'Reject'} Sleepover Request
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Admin Response
+              </label>
+              <Textarea
+                placeholder="Enter your response..."
+                value={adminResponse}
+                onChange={(e) => setAdminResponse(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant={actionType === 'approve' ? 'default' : 'destructive'}
+              onClick={handleSubmitAction}
+            >
+              {actionType === 'approve' ? 'Approve' : 'Reject'} Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 } 
