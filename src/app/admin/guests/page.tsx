@@ -94,6 +94,9 @@ export default function GuestsPage() {
                           Room: {request.roomNumber}
                         </p>
                         <p className="text-sm text-muted-foreground">
+                          Tenant Code: {request.tenantCode}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
                           Purpose: {request.purpose}
                         </p>
                         <p className="text-sm text-muted-foreground">
@@ -138,6 +141,9 @@ export default function GuestsPage() {
                             Room: {request.roomNumber}
                           </p>
                           <p className="text-sm text-muted-foreground">
+                            Tenant Code: {request.tenantCode}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
                             Purpose: {request.purpose}
                           </p>
                           <p className="text-sm text-muted-foreground">
@@ -176,6 +182,9 @@ export default function GuestsPage() {
                             Room: {request.roomNumber}
                           </p>
                           <p className="text-sm text-muted-foreground">
+                            Tenant Code: {request.tenantCode}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
                             Purpose: {request.purpose}
                           </p>
                           <p className="text-sm text-muted-foreground">
@@ -212,6 +221,9 @@ export default function GuestsPage() {
                           </p>
                           <p className="text-sm text-muted-foreground">
                             Room: {request.roomNumber}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Tenant Code: {request.tenantCode}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             Purpose: {request.purpose}

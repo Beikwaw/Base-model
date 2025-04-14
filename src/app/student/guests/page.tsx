@@ -28,6 +28,7 @@ interface GuestData {
   fromDate: string
   checkInTime: string
   date: string
+  tenantCode: string
 }
 
 interface AdditionalGuest {
@@ -123,6 +124,7 @@ export default function GuestRegistrationPage() {
         lastName,
         phoneNumber: guestPhoneNumber,
         roomNumber: userData.room_number,
+        tenantCode: userData.tenant_code,
         purpose,
         fromDate,
         additionalGuests: multipleGuests === "yes" ? additionalGuests : undefined
@@ -255,6 +257,32 @@ export default function GuestRegistrationPage() {
                     Date
                   </Label>
                   <Input id="fromDate" name="fromDate" type="date" required className="bg-white" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="roomNumber" className="text-black">
+                    Room Number
+                  </Label>
+                  <Input
+                    id="roomNumber"
+                    name="roomNumber"
+                    value={userData?.room_number || ''}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tenantCode" className="text-black">
+                    Tenant Code
+                  </Label>
+                  <Input
+                    id="tenantCode"
+                    name="tenantCode"
+                    value={userData?.tenant_code || ''}
+                    readOnly
+                    className="bg-gray-100"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -445,6 +473,7 @@ export default function GuestRegistrationPage() {
                 <p><span className="font-semibold">Full Name:</span> {currentGuest?.firstName} {currentGuest?.lastName}</p>
                 <p><span className="font-semibold">Phone Number:</span> {currentGuest?.phoneNumber}</p>
                 <p><span className="font-semibold">Room Number:</span> {currentGuest?.roomNumber}</p>
+                <p><span className="font-semibold">Tenant Code:</span> {currentGuest?.tenantCode}</p>
                 <p><span className="font-semibold">Duration:</span> {currentGuest?.fromDate ? new Date(currentGuest.fromDate).toLocaleDateString() : 'Not specified'}</p>
                 <p><span className="font-semibold">Purpose:</span> {currentGuest?.purpose}</p>
               </div>
